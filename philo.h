@@ -31,9 +31,12 @@ typedef struct s_global
 
 typedef struct s_philo
 {
-    int         id;
-    int         state;
-    t_global    *global;
+    int             id;
+    int             state;
+    pthread_mutex_t *right;
+    pthread_mutex_t *left;
+    struct timeval  last_meal;
+    t_global        *global;
 }               t_philo;
 
 int			ft_atoi(const char *str);

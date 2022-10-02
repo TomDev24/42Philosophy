@@ -37,8 +37,42 @@ t_philo **init_philos(t_global *global){
         philos[i]->id = i;
         philos[i]->state = THINK;
         philos[i]->global = global;
+        gettimeofday(&(philos[i]->last_meal), NULL);
     }
     return philos;
+}
+
+pthread_mutex_t **init_forks(t_global *global){
+    pthread_mutex_t    **forks;
+    int                 i;
+
+    forks = malloc(sizeof(pthread_mutex_t*) * global->params->philo_amount);
+    if (!forks)
+        exit(1);
+    i = -1;
+    while(++i < global->params->philo_amount){
+        forks[i] = malloc(sizeof(pthread_mutex_t));
+        pthread_mutex_init(forks[i], NULL);
+        if (!forks[i])
+            exit(1);
+    }
+    return forks;
+}
+
+pthread_t **init_threads(int philo_amount){
+    pthread_t **threads;
+    int         i;
+
+    threads = malloc(sizeof(pthread_t*) * philo_amount);
+    if (!threads)
+        exit(1);
+    i = -1;
+    while(++i < philo_amount){
+            threads[i] = malloc(sizeof(pthread_t));
+            if (!threads[i])
+                exit(1);
+    }
+    return threads;
 }
 
 void    *routine(void *philosoph){
@@ -56,6 +90,7 @@ void    *routine(void *philosoph){
             philo->state = THINK;
         }
         else if (philo->state == EAT){
+            gettimeofday(&(philo->last_meal), NULL);
             printf("is eating\n");
             usleep(global->params->eat_time * 1000);
             philo->state = SLEEP;
@@ -69,15 +104,34 @@ void    *routine(void *philosoph){
     }
 }
 
+char    is_dead(t_philo *philo, t_params *params){
+    struct timeval  now;
+    long    int             die_time;
+    struct timeval  *last_meal;
+
+    die_time = params->die_time;
+    last_meal = &(philo->last_meal);
+    gettimeofday(&now, NULL);
+    //printf("Time diff %ld\n", (now.tv_sec * 1000 + now.tv_usec / 1000) - (last_meal->tv_sec * 1000 + last_meal->tv_usec / 1000));
+    if ((now.tv_sec * 1000 + now.tv_usec / 1000) - (last_meal->tv_sec * 1000 + last_meal->tv_usec / 1000) >= die_time)
+        return 1;
+
+    return 0;
+}
+
+
 int main(int argc, char **argv){
-    t_global        global;
-    t_philo         **philos;
-    pthread_t       *threads;
-    int             i;
+    t_global            global;
+    t_philo             **philos;
+    pthread_t           **threads;
+    pthread_mutex_t     **forks;
+    int                 i;
 
     global.params = get_params(argc, argv);
     philos = init_philos(&global);
     threads = malloc(sizeof(pthread_t) * global.params->philo_amount);
+    threads = init_threads(global.params->philo_amount);
+    forks = init_forks(&global);
     if (!threads)
         return 1;
     global.params->die_time = 3000;
@@ -85,10 +139,24 @@ int main(int argc, char **argv){
     global.params->sleep_time = 1500;
 
     i = -1;
-    while (++i < global.params->philo_amount)
-        pthread_create(&threads[i], NULL, &routine, philos[i]);
-    i = -1;
-    while (++i < global.params->philo_amount)
-        pthread_join(threads[i], NULL);
+    while (++i < global.params->philo_amount){
+        philos[i]->right = forks[i];
+        philos[i]->left = forks[(i + 1) % global.params->philo_amount];
+        //philos[i]->min = forks[i];
+        //philos[i]->max = forks[(i + 1) % global.params->philo_amount];
+        pthread_create(threads[i], NULL, &routine, philos[i]);
+        pthread_detach(*(threads[i]));
+    }
+    
+    while (1){
+        i = -1;
+        while (++i < global.params->philo_amount){
+            if (is_dead(philos[i], global.params)){
+                //printf("Die\n");
+                return 0;
+            }
+            //pthread_join(threads[i], NULL);
+        }
+    }
     return  0;
 }
