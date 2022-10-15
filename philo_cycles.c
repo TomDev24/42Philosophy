@@ -45,10 +45,10 @@ int start_emulation(t_params *params){
     philos = params->philos;
     i = -1;
     while (++i < params->philo_amount){
+        philos[i].tm_last_eat = timestamp();
 		if (pthread_create(&(philos[i].thread), NULL, thread, &(philos[i])))
 			return (3);
-        //maybe detach here?
-		philos[i].tm_last_eat = timestamp();
+        pthread_detach(philos[i].thread);
     }
     return 0;
 }

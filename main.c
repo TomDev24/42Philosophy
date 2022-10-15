@@ -1,5 +1,6 @@
 #include "philo.h"
 
+/*
 int     clean_up(t_params *p, t_philo *philos){
     int i;
     int code;
@@ -16,6 +17,7 @@ int     clean_up(t_params *p, t_philo *philos){
     code += pthread_mutex_destroy(&p->access);
     return code;
 }
+*/
 
 void    death_monitor(t_params *p, t_philo *philos){
     int i;
@@ -74,7 +76,7 @@ int main(int argc, char **argv){
         return(error_manager(3));
 
     death_monitor(&params, params.philos);
-    if (clean_up(&params, params.philos))
-        return(error_manager(4));
+    //if (clean_up(&params, params.philos))
+    //    return(error_manager(4));
     return 0;
 }
