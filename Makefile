@@ -1,2 +1,2 @@
 all:
-	gcc -g -Wall -Wextra *.c -pthread
+	gcc -fsanitize=thread -g -Wall -Wextra *.c -pthread

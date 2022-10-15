@@ -1,22 +1,26 @@
 #include "philo.h"
 
-void    p_eating(t_philo *philo, t_params *params){
+int    p_eating(t_philo *philo, t_params *params){
 
-    pthread_mutex_lock(&params->forks[philo->min_fork]);
+    pthread_mutex_lock(&(params->forks[philo->min_fork]));
     lock_print("has taken a fork", philo->id, params);
-    pthread_mutex_lock(&params->forks[philo->max_fork]);
+    if (philo->min_fork == philo->max_fork)
+        return 1 + pthread_mutex_unlock(&(params->forks[philo->max_fork]));
+    pthread_mutex_lock(&(params->forks[philo->max_fork]));
     lock_print("has taken a fork", philo->id, params);
-
     lock_print("is eating", philo->id, params); 
-    pthread_mutex_lock(&params->access);
+    pthread_mutex_lock(&(params->access));
     philo->tm_last_eat = timestamp();
-    pthread_mutex_unlock(&params->access);
+    pthread_mutex_unlock(&(params->access));
     //Check ft_usleep!!
     ft_usleep(params->eat_time);
+    pthread_mutex_lock(&(params->access));
     philo->c_eat++;
+    pthread_mutex_unlock(&(params->access));
 
-    pthread_mutex_unlock(&params->forks[philo->max_fork]);
-    pthread_mutex_unlock(&params->forks[philo->min_fork]);
+    pthread_mutex_unlock(&(params->forks[philo->max_fork]));
+    pthread_mutex_unlock(&(params->forks[philo->min_fork]));
+    return 0;
 }
 
 void    *thread(void *philosoph){
@@ -26,10 +30,12 @@ void    *thread(void *philosoph){
     philo = philosoph;
     params = philo->params;
     if (philo->id % 2 != 0)
-        usleep(2500);
-    while(params->all_alive == 1 && !params->rounds_finish){
-        p_eating(philo, params);
-        //if everyone eated reuqired amount then break out
+        usleep(params->eat_time * 1000);
+    while(params->all_alive){
+        if(p_eating(philo, params))
+            break;
+        if (!params->all_alive || params->rounds_finish)
+            break;
         lock_print("is sleeping", philo->id, params);
         ft_usleep(params->sleep_time);
         lock_print("is thinking", philo->id, params);
@@ -45,10 +51,10 @@ int start_emulation(t_params *params){
     philos = params->philos;
     i = -1;
     while (++i < params->philo_amount){
+        philos[i].tm_last_eat = timestamp();
 		if (pthread_create(&(philos[i].thread), NULL, thread, &(philos[i])))
 			return (3);
-        //maybe detach here?
-		philos[i].tm_last_eat = timestamp();
+        //pthread_detach(philos[i].thread);
     }
     return 0;
 }

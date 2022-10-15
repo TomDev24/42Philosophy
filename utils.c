@@ -44,9 +44,20 @@ int			ft_atoi(const char *str)
 }
 
 void	lock_print(char *s, int	philo_id, t_params *params){
-	pthread_mutex_lock(&params->write);
+	/*
+	char finish;
+
+	finish = 0;
+	//pthread_mutex_lock(&(params->access));
+	if (params->all_alive <= 0)
+		finish = 1;
+	//pthread_mutex_unlock(&(params->access));
+	if (finish)
+		return;
+	*/
+	pthread_mutex_lock(&(params->write));
 	printf("%ld ", timestamp() - params->tm_start);
 	printf("%d ", philo_id + 1);
 	printf("%s\n", s);
-	pthread_mutex_unlock(&params->write);
+	pthread_mutex_unlock(&(params->write));
 }

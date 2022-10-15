@@ -19,26 +19,35 @@ int     clean_up(t_params *p, t_philo *philos){
 
 void    death_monitor(t_params *p, t_philo *philos){
     int i;
+    int j;
 
     while(!p->rounds_finish){
         i = -1;
+        j = 0;
 		while (++i < p->philo_amount && p->all_alive)
 		{
-			pthread_mutex_lock(&p->access);
+			pthread_mutex_lock(&(p->access));
+            if (p->round_amount != 0 && philos[i].c_eat >= p->round_amount)
+                j++;
             if (timestamp() - philos[i].tm_last_eat > p->die_time)
 			{
                 lock_print("died", i, p);
 				p->all_alive = 0;
 			}
-            pthread_mutex_unlock(&p->access);
+            pthread_mutex_unlock(&(p->access));
 		}
         if (!p->all_alive)
             break;
-        i = 0;
-        while (p->round_amount != 0 && i < p->philo_amount && philos[i].c_eat >= p->round_amount)
-            i++;
-        if (i == p->philo_amount)
+        // i = 0;
+        // while (p->round_amount != 0 && i < p->philo_amount){
+        //     pthread_mutex_lock(&(p->access));
+        //     if (philos[i].c_eat >= p->round_amount)
+        //         i++;
+        //     pthread_mutex_unlock(&(p->access));
+		// }
+        if (j == p->philo_amount)
             p->rounds_finish = 1;
+        usleep(800);
     }
 }
 
