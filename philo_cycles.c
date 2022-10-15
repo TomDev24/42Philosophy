@@ -30,7 +30,7 @@ void    *thread(void *philosoph){
     philo = philosoph;
     params = philo->params;
     if (philo->id % 2 != 0)
-        usleep(params->eat_time * 1000);
+        usleep(2500);
     while(params->all_alive){
         if(p_eating(philo, params))
             break;
