@@ -5,7 +5,7 @@ int    p_eating(t_philo *philo, t_params *params){
     pthread_mutex_lock(&(params->forks[philo->min_fork]));
     lock_print("has taken a fork", philo->id, params);
     if (philo->min_fork == philo->max_fork)
-        return 1 + pthread_mutex_unlock(&(params->forks[philo->max_fork]));
+        return 1 + pthread_mutex_unlock(&(params->forks[philo->min_fork]));
     pthread_mutex_lock(&(params->forks[philo->max_fork]));
     lock_print("has taken a fork", philo->id, params);
     lock_print("is eating", philo->id, params); 
@@ -30,12 +30,16 @@ void    *thread(void *philosoph){
     philo = philosoph;
     params = philo->params;
     if (philo->id % 2 != 0)
-        usleep(2500);
-    while(params->all_alive){
+        usleep(params->eat_time * 1000);
+    while(1){
         if(p_eating(philo, params))
             break;
-        if (!params->all_alive || params->rounds_finish)
+        pthread_mutex_lock(&(params->access));
+        if (!params->all_alive || params->rounds_finish){
+            pthread_mutex_unlock(&(params->access));
             break;
+        }
+        pthread_mutex_unlock(&(params->access));
         lock_print("is sleeping", philo->id, params);
         ft_usleep(params->sleep_time);
         lock_print("is thinking", philo->id, params);

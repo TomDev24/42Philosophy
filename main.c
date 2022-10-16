@@ -34,19 +34,14 @@ void    death_monitor(t_params *p, t_philo *philos){
                 lock_print("died", i, p);
 				p->all_alive = 0;
 			}
+            if (!p->all_alive){
+                pthread_mutex_unlock(&(p->access));
+                return;
+            }
+            if (j == p->philo_amount)
+                p->rounds_finish = 1;
             pthread_mutex_unlock(&(p->access));
 		}
-        if (!p->all_alive)
-            break;
-        // i = 0;
-        // while (p->round_amount != 0 && i < p->philo_amount){
-        //     pthread_mutex_lock(&(p->access));
-        //     if (philos[i].c_eat >= p->round_amount)
-        //         i++;
-        //     pthread_mutex_unlock(&(p->access));
-		// }
-        if (j == p->philo_amount)
-            p->rounds_finish = 1;
         usleep(800);
     }
 }
